@@ -29,6 +29,7 @@ PREFIX = arm-linux-gnueabihf-
 CSRC   = 
 CSRC  += $(SRCDIR)/gpio.c
 CSRC  += $(SRCDIR)/spi.c
+CSRC  += $(SRCDIR)/i2c.c
 CSRC  += $(SRCDIR)/tm1638.c
 CSRC  += $(SRCDIR)/remocon.c
 

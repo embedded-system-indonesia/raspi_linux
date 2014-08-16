@@ -24,13 +24,14 @@ PREFIX = arm-linux-gnueabihf-
 
 #
 # Define C sources
-# Comment out if don't want to include in library file !
+# Select file you want to test
 #
 # CSRC   = 
 # CSRC   = $(SRCDIR)/test_gpio.c
 # CSRC   = $(SRCDIR)/test_spi.c
 # CSRC   = $(SRCDIR)/test_tm1638.c
-CSRC   = $(SRCDIR)/test_remocon.c
+# CSRC   = $(SRCDIR)/test_remocon.c
+CSRC   = $(SRCDIR)/test_i2c.c
 
 # Define Assembly sources
 ASRC   = 
