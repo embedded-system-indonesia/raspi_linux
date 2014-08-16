@@ -18,22 +18,24 @@ OBJDIR   = $(BUILDDIR)/obj
 LSTDIR   = $(BUILDDIR)/lst
 
 # Compiler
-CC      = $(PREFIX)gcc
+CC       = $(PREFIX)gcc
 ifeq ($(MAKE_LIB),Y)
-LD      = $(PREFIX)ar
-LDFLAGS = rcs
-OBJFLAG =
+LD       = $(PREFIX)ar
+LDFLAGS  = 
+LIBFLAGS = rcs
+OBJFLAG  =
 else
-LD      = $(PREFIX)gcc
-LDFLAGS = -lpthread 
-OBJFLAG = -o
+LD       = $(PREFIX)gcc
+LDFLAGS  = -lpthread 
+LIBFLAGS =
+OBJFLAG  = -o
 endif
-AFLAGS  = -Wa,-amhls=$(LSTDIR)/$(notdir $(<:.s=.lst))
-CFLAGS  = -Wa,-alms=$(LSTDIR)/$(notdir $(<:.c=.lst))
-# CP    = $(PREFIX)objcopy
-# OD    = $(PREFIX)objdump
-# HEX   = $(CP) -O ihex
-# BIN   = $(CP) -O binary
+AFLAGS   = -Wa,-amhls=$(LSTDIR)/$(notdir $(<:.s=.lst))
+CFLAGS   = -Wa,-alms=$(LSTDIR)/$(notdir $(<:.c=.lst))
+# CP     = $(PREFIX)objcopy
+# OD     = $(PREFIX)objdump
+# HEX    = $(CP) -O ihex
+# BIN    = $(CP) -O binary
 
 
 #
@@ -60,7 +62,7 @@ OBJS     = $(AOBJS) $(COBJS)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJFLAG) $(BUILDDIR)/$(TARGET) $^ $(LIBS)
+	$(LD) $(LIBFLAGS) $(OBJFLAG) $(BUILDDIR)/$(TARGET) $^ $(LIBS) $(LDFLAGS)
 
 $(OBJS): | $(BUILDDIR) make_sub
 
