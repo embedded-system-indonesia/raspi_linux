@@ -424,14 +424,14 @@ int gpio_new(struct gpio_class *gpio_obj)
 		// Open memory file
 		gpio_info.fd_map = open("/dev/mem", O_RDWR | O_SYNC);
 		if (gpio_info.fd_map < 0) {
-			printf("ERROR: couldn't open /dev/mem\n");
+			printf("<error gpio_new> couldn't open /dev/mem\n");
 			return -1;
 		}
 
 		// Mapping
 		gpio_info.map_gpio = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, gpio_info.fd_map, GPIO_BASE_ADDR);
 		if (gpio_info.map_gpio == MAP_FAILED) {
-			printf("ERROR: call mmap not successfully\n");
+			printf("<error gpio_new> call mmap not successfully\n");
 			return -1;
 		}
 		

@@ -104,6 +104,7 @@ static int i2c_start_comm_soft_mst(struct _i2c_desc_buf_ *desc_buf, uint8_t *dat
 		// Check ACK
 		if (gpio_obj->get_level(desc_buf->port_sda)) {
 			// NACK
+			printf("<error i2c_start_comm_soft_mst> NACK, data no = %d, value = 0x%02x\n", ctdat, data_out[ctdat]);
 			error = 1;
 			break;
 		}
@@ -160,7 +161,7 @@ static int i2c_start_comm(i2c_desc_t i2c_desc, uint8_t *data_out, uint32_t len_o
 	struct _i2c_desc_buf_ *desc_buf = &i2c_desc_buf[i2c_desc];
 	int ret = -1;
 
-	if (i2c_desc >= I2C_DESC_MAX || data_out == NULL || len_out == 0)
+	if (i2c_desc >= I2C_DESC_MAX || desc_buf->used == 0 || data_out == NULL || len_out == 0)
 		return -1;
 	
 	switch (desc_buf->type) {

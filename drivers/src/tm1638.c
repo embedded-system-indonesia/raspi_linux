@@ -180,7 +180,7 @@ tm1638_desc_t tm1638_new(struct tm1638_class *tm1638_obj, tm1638_type_t type, ui
 	setting.fullplex  = 0;
 	setting.msb       = 0;
 	if ((td_buf->spi_desc = spi_new(&td_buf->spi, &setting)) == SPI_DESC_ERR) {
-		printf("<ERROR TM1638> can't create SPI object\n");
+		printf("<error tm1638_new> can't create SPI object\n");
 		return TM1638_DESC_ERR;
 	}
 

@@ -31,7 +31,8 @@ PREFIX = arm-linux-gnueabihf-
 # CSRC   = $(SRCDIR)/test_spi.c
 # CSRC   = $(SRCDIR)/test_tm1638.c
 # CSRC   = $(SRCDIR)/test_remocon.c
-CSRC   = $(SRCDIR)/test_i2c.c
+# CSRC   = $(SRCDIR)/test_i2c.c
+CSRC   = $(SRCDIR)/test_ioexp_pcf8574.c
 
 # Define Assembly sources
 ASRC   = 
