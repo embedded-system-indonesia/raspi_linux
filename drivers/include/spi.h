@@ -40,7 +40,7 @@ struct spi_setting {
 };
 
 struct spi_class {
-	int (*start_comm) (spi_desc_t spi_desc, unsigned char *data_out, uint32_t len_out, unsigned char *data_in, uint32_t len_in);
+	int (*start_comm) (spi_desc_t spi_desc, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
 };
 
 

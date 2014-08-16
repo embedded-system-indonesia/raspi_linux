@@ -33,7 +33,6 @@ struct _spi_desc_buf_ {
 
 struct _spi_info_ {
 	struct gpio_class	gpio;
-	uint32_t          	gpio_max;
 };
 
 
@@ -69,20 +68,13 @@ static int spi_setup_port(spi_desc_t spi_desc)
 	switch (type) {
 	case SPI_TYPE_SOFT_MASTER:
 		ret = 0;
-		if (port_cs < spi_info.gpio_max) {
-			spi_info.gpio.set_mode(port_cs, GPIO_MODE_OUTPUT);
-			spi_info.gpio.set_level(port_cs, 1);
-		}
-		if (port_clk < spi_info.gpio_max) {
-			spi_info.gpio.set_mode(port_clk, GPIO_MODE_OUTPUT);
-			spi_info.gpio.set_level(port_clk, 1);
-		}
-		if (port_do < spi_info.gpio_max) {
-			spi_info.gpio.set_mode(port_do, GPIO_MODE_OUTPUT);
-			spi_info.gpio.set_level(port_do, 1);
-		}
-		if (port_di < spi_info.gpio_max)
-			spi_info.gpio.set_mode(port_do, GPIO_MODE_INPUT);
+		spi_info.gpio.set_mode(port_cs, GPIO_MODE_OUTPUT);
+		spi_info.gpio.set_level(port_cs, 1);
+		spi_info.gpio.set_mode(port_clk, GPIO_MODE_OUTPUT);
+		spi_info.gpio.set_level(port_clk, 1);
+		spi_info.gpio.set_mode(port_do, GPIO_MODE_OUTPUT);
+		spi_info.gpio.set_level(port_do, 1);
+		spi_info.gpio.set_mode(port_do, GPIO_MODE_INPUT);
 		break;
 	}
 
@@ -92,28 +84,23 @@ static int spi_setup_port(spi_desc_t spi_desc)
 
 static void spi_port_set_lvl(uint32_t port, uint8_t level)
 {
-	if (port < spi_info.gpio_max)
-		spi_info.gpio.set_level(port, level);
+	spi_info.gpio.set_level(port, level);
 }
 
 
 static uint8_t spi_port_get_lvl(uint32_t port)
 {
-	if (port >= spi_info.gpio_max)
-		return 0;
-	
 	return spi_info.gpio.get_level(port);
 }
 
 
 static void spi_port_set_mode(uint32_t port, gpio_mode_t mode)
 {
-	if (port < spi_info.gpio_max)
-		spi_info.gpio.set_mode(port, mode);
+	spi_info.gpio.set_mode(port, mode);
 }
 
 
-static int spi_start_comm_soft_master(spi_desc_t spi_desc, unsigned char *data_out, uint32_t len_out, unsigned char *data_in, uint32_t len_in)
+static int spi_start_comm_soft_master(spi_desc_t spi_desc, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
 {
 	uint32_t port_cs  = spi_desc_buf[spi_desc].setting.port_cs;
 	uint32_t port_clk = spi_desc_buf[spi_desc].setting.port_clk;
@@ -232,7 +219,7 @@ static int spi_start_comm_soft_master(spi_desc_t spi_desc, unsigned char *data_o
 }
 
 
-static int spi_start_comm(spi_desc_t spi_desc, unsigned char *data_out, uint32_t len_out, unsigned char *data_in, uint32_t len_in)
+static int spi_start_comm(spi_desc_t spi_desc, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
 {
 	uint8_t ret = -1;
 	
@@ -268,7 +255,6 @@ spi_desc_t spi_new(struct spi_class *spi_obj, const struct spi_setting *setting)
 
 	// Load GPIO
 	gpio_new(&spi_info.gpio);
-	spi_info.gpio_max = spi_info.gpio.get_port_num();
 
 	// Setup port
 	if (spi_setup_port(sd) < 0)

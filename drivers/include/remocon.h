@@ -24,7 +24,7 @@ typedef int rmc_desc_t;
 #define RMC_DESC_ERR						(-1)
 
 // Remocon format
-typedef unsigned char rmc_format_t;
+typedef uint8_t rmc_format_t;
 #define RMC_FORMAT_KASEIKYO					(0)
 
 // Callback function

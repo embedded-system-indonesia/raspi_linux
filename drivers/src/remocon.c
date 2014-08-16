@@ -28,22 +28,22 @@
 
 
 struct _rmc_bit_ {
-	unsigned short     		ct_bit;
-	unsigned char      		ct_byte;
-	unsigned char      		lead;
-	unsigned char      		buf[RMC_DATA_SIZE];
+	uint32_t     		ct_bit;
+	uint8_t      		ct_byte;
+	uint8_t      		lead;
+	uint8_t      		buf[RMC_DATA_SIZE];
 };
 
 struct _rmc_desc_buf_ {
-	rmc_format_t			format;
-	uint32_t 				port_ir;
-	rmc_callback_func 		callback;
-	struct gpio_class		gpio_obj;
-	unsigned long long 		time_now;
-	unsigned long long 		time_old;
-	unsigned long long 		time_div;
-	struct _rmc_bit_		rmc_bit;
-	uint8_t 				used;
+	rmc_format_t		format;
+	uint32_t 			port_ir;
+	rmc_callback_func 	callback;
+	struct gpio_class	gpio_obj;
+	uint64_t 			time_now;
+	uint64_t 			time_old;
+	uint64_t	 		time_div;
+	struct _rmc_bit_	rmc_bit;
+	uint8_t 			used;
 };
 
 static struct _rmc_desc_buf_ rmc_desc_buf[RMC_DESC_MAX];

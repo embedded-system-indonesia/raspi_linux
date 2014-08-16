@@ -18,11 +18,11 @@
 
 #include <stdint.h>									// uint8_t, uint32_t
 
-typedef unsigned char tm1638_type_t;
+typedef uint8_t tm1638_type_t;
 #define TM1638_COMMON_GRID					(0)		// Common cathode
 #define TM1638_COMMON_SEGMENT				(1)		// Common anode
 
-typedef unsigned char tm1638_pulse_t;
+typedef uint8_t tm1638_pulse_t;
 #define TM1638_PULSE_1_16					(0)
 #define TM1638_PULSE_2_16					(1)
 #define TM1638_PULSE_4_16					(2)

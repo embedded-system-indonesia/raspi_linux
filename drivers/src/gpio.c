@@ -140,9 +140,9 @@ static int gpio_file_write_num(const char *file_name, uint32_t numeric)
 }
 
 
-static void gpio_delay_cyc(unsigned long cyc)
+static void gpio_delay_cyc(uint32_t cyc)
 {
-	unsigned long ct;
+	uint32_t ct;
 	
 	for (ct = 0; ct < cyc; ct++) {
 		asm volatile("nop");
