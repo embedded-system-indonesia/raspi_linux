@@ -51,11 +51,11 @@ static void rmc_callback(uint8_t *data_rcv, uint8_t len)
 
 int main()
 {
-	rmc_desc_t rd;
+	rmc_id_t id;
 	uint32_t port_ir = 18;  // Infra red port number
 	
-	// Create remocon descriptor
-	if ((rd = rmc_new(RMC_FORMAT_KASEIKYO, port_ir, rmc_callback)) == RMC_DESC_ERR)
+	// Create remocon id
+	if ((id = rmc_new(RMC_FORMAT_KASEIKYO, port_ir, rmc_callback)) == RMC_ID_ERR)
 		return -1;
 
 	// Create GPIO object
@@ -70,7 +70,7 @@ int main()
 		sleep(1);
 	}
 	
-	rmc_free(rd);
+	rmc_free(id);
 	gpio_free();
 	
 	return 0;

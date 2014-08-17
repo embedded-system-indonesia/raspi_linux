@@ -22,25 +22,25 @@
 int main()
 {
 	struct ioexp_pcf8574_class ioexp_obj;
-	ioexp_pcf8574_desc_t desc;
+	ioexp_pcf8574_id_t id;
 
-	if ((desc = ioexp_pcf8574_new(&ioexp_obj, 23, 24)) == IOEXP_PCF8574_DESC_ERR)
+	if ((id = ioexp_pcf8574_new(&ioexp_obj, 23, 24)) == IOEXP_PCF8574_ID_ERR)
 		return -1;
 
-	ioexp_obj.set_all_port(desc, 0xFF);
+	ioexp_obj.set_all_port(id, 0xFF);
 	sleep(1);
 	
 	// Loop forever, can add timeout if necessary
 	while (1) {
-		ioexp_obj.set_one_port(desc, 2, 1);
-		ioexp_obj.set_one_port(desc, 3, 0);
+		ioexp_obj.set_one_port(id, 2, 1);
+		ioexp_obj.set_one_port(id, 3, 0);
 		sleep(1);
-		ioexp_obj.set_one_port(desc, 2, 0);
-		ioexp_obj.set_one_port(desc, 3, 1);
+		ioexp_obj.set_one_port(id, 2, 0);
+		ioexp_obj.set_one_port(id, 3, 1);
 		sleep(1);
 	}
 	
-	ioexp_pcf8574_free(desc);
+	ioexp_pcf8574_free(id);
 	
 	return 0;
 }

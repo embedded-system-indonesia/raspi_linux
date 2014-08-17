@@ -23,7 +23,7 @@ int main()
 {
 	struct spi_class   spi;
 	struct spi_setting setting;
-	spi_desc_t         spi_desc;
+	spi_id_t           spi_id;
 	uint8_t            data_out[20], data_in[20];
 	uint32_t           len_out, len_in;
 	uint8_t            ct = 10;
@@ -36,21 +36,21 @@ int main()
 	setting.fullplex  = 0;
 	setting.msb       = 0;
 
-	spi_desc = spi_new(&spi, &setting);
+	spi_id = spi_new(&spi, &setting);
 
-	if (spi_desc != SPI_DESC_ERR) {
+	if (spi_id != SPI_ID_ERR) {
 		data_out[0] = 0x40;
 		len_out     = 1;
-		spi.start_comm(spi_desc, data_out, len_out, NULL, 0);
+		spi.start_comm(spi_id, data_out, len_out, NULL, 0);
 
 		data_out[0] = 0xC0;
 		len_out     = 17;
 		memset(&data_out[1], 0xFF, 16);
-		spi.start_comm(spi_desc, data_out, len_out, NULL, 0);
+		spi.start_comm(spi_id, data_out, len_out, NULL, 0);
 
 		data_out[0] = 0x8F;
 		len_out     = 1;
-		spi.start_comm(spi_desc, data_out, len_out, NULL, 0);
+		spi.start_comm(spi_id, data_out, len_out, NULL, 0);
 
 		while (ct) {
 			sleep(1);
@@ -60,10 +60,10 @@ int main()
 		data_out[0] = 0xC0;
 		len_out     = 17;
 		memset(&data_out[1], 0, 16);
-		spi.start_comm(spi_desc, data_out, len_out, NULL, 0);
+		spi.start_comm(spi_id, data_out, len_out, NULL, 0);
 	}
 	
-	spi_free(spi_desc);
+	spi_free(spi_id);
 	
 	return 0;
 }

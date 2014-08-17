@@ -21,12 +21,12 @@
 #include "spi.h"
 
 
-#define SPI_DESC_MAX		(10)
-#define SPI_BIT_DELAY		(2)  // 2 usec
-#define BW(v)				(1 << (v))
+#define OBJ_BUF_SIZE			(10)
+#define SPI_BIT_DELAY			(2)  // 2 usec
+#define BW(v)					(1 << (v))
 
 
-struct _spi_desc_buf_ {
+struct _spi_obj_buf_ {
 	struct spi_setting	setting;
 	uint8_t 		   	used;
 };
@@ -36,33 +36,33 @@ struct _spi_info_ {
 };
 
 
-static struct _spi_desc_buf_ spi_desc_buf[SPI_DESC_MAX];
+static struct _spi_obj_buf_ obj_buf_list[OBJ_BUF_SIZE];
 static struct _spi_info_ spi_info;
 
 
-static spi_desc_t spi_get_desc(void)
+static int spi_get_obj_buf_id(void)
 {
-	spi_desc_t sd = SPI_DESC_ERR;
+	int id = -1;
 
-	for (sd = 0; sd < SPI_DESC_MAX; sd++) {
-		if (spi_desc_buf[sd].used == 0)
+	for (id = 0; id < OBJ_BUF_SIZE; id++) {
+		if (obj_buf_list[id].used == 0)
 			break;
 	}
 
-	if (sd >= SPI_DESC_MAX)
-		return SPI_DESC_ERR;
+	if (id >= OBJ_BUF_SIZE)
+		return -1;
 
-	return sd;
+	return id;
 }
 
 
-static int spi_setup_port(spi_desc_t spi_desc)
+static int spi_setup_port(spi_id_t spi_id)
 {
-	uint32_t port_cs  = spi_desc_buf[spi_desc].setting.port_cs;
-	uint32_t port_clk = spi_desc_buf[spi_desc].setting.port_clk;
-	uint32_t port_do  = spi_desc_buf[spi_desc].setting.port_do;
-	uint32_t port_di  = spi_desc_buf[spi_desc].setting.port_di;
-	spi_type_t type   = spi_desc_buf[spi_desc].setting.type;
+	uint32_t port_cs  = obj_buf_list[spi_id].setting.port_cs;
+	uint32_t port_clk = obj_buf_list[spi_id].setting.port_clk;
+	uint32_t port_do  = obj_buf_list[spi_id].setting.port_do;
+	uint32_t port_di  = obj_buf_list[spi_id].setting.port_di;
+	spi_type_t type   = obj_buf_list[spi_id].setting.type;
 	int ret = -1;
 	
 	switch (type) {
@@ -100,14 +100,14 @@ static void spi_port_set_mode(uint32_t port, gpio_mode_t mode)
 }
 
 
-static int spi_start_comm_soft_master(spi_desc_t spi_desc, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
+static int spi_start_comm_soft_master(spi_id_t spi_id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
 {
-	uint32_t port_cs  = spi_desc_buf[spi_desc].setting.port_cs;
-	uint32_t port_clk = spi_desc_buf[spi_desc].setting.port_clk;
-	uint32_t port_do  = spi_desc_buf[spi_desc].setting.port_do;
-	uint32_t port_di  = spi_desc_buf[spi_desc].setting.port_di;
-	uint8_t  msb      = spi_desc_buf[spi_desc].setting.msb;
-	uint8_t  fullplex = spi_desc_buf[spi_desc].setting.fullplex;
+	uint32_t port_cs  = obj_buf_list[spi_id].setting.port_cs;
+	uint32_t port_clk = obj_buf_list[spi_id].setting.port_clk;
+	uint32_t port_do  = obj_buf_list[spi_id].setting.port_do;
+	uint32_t port_di  = obj_buf_list[spi_id].setting.port_di;
+	uint8_t  msb      = obj_buf_list[spi_id].setting.msb;
+	uint8_t  fullplex = obj_buf_list[spi_id].setting.fullplex;
 	uint32_t ctdat;
 	uint8_t  ctbit;
 	
@@ -219,16 +219,16 @@ static int spi_start_comm_soft_master(spi_desc_t spi_desc, uint8_t *data_out, ui
 }
 
 
-static int spi_start_comm(spi_desc_t spi_desc, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
+static int spi_start_comm(spi_id_t spi_id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
 {
 	uint8_t ret = -1;
 	
-	if (spi_desc >= SPI_DESC_MAX || spi_desc_buf[spi_desc].used == 0) 
+	if (spi_id >= OBJ_BUF_SIZE || obj_buf_list[spi_id].used == 0) 
 		return -1;
 
-	switch (spi_desc_buf[spi_desc].setting.type) {
+	switch (obj_buf_list[spi_id].setting.type) {
 	case SPI_TYPE_SOFT_MASTER:
-		ret = spi_start_comm_soft_master(spi_desc, data_out, len_out, data_in, len_in);
+		ret = spi_start_comm_soft_master(spi_id, data_out, len_out, data_in, len_in);
 		break;
 	}
 	
@@ -236,19 +236,19 @@ static int spi_start_comm(spi_desc_t spi_desc, uint8_t *data_out, uint32_t len_o
 }
 
 
-spi_desc_t spi_new(struct spi_class *spi_obj, const struct spi_setting *setting)
+spi_id_t spi_new(struct spi_class *spi_obj, const struct spi_setting *setting)
 {
-	spi_desc_t sd;
+	spi_id_t id;
 	
 	if (spi_obj == NULL || setting == NULL)
-		return SPI_DESC_ERR;
+		return SPI_ID_ERR;
 
-	if ((sd = spi_get_desc()) == SPI_DESC_ERR)
-		return SPI_DESC_ERR;
+	if ((id = spi_get_obj_buf_id()) < 0)
+		return SPI_ID_ERR;
 
 	// Store data
-	memcpy(&spi_desc_buf[sd].setting, setting, sizeof(struct spi_setting));
-	spi_desc_buf[sd].used = 1;
+	memcpy(&obj_buf_list[id].setting, setting, sizeof(struct spi_setting));
+	obj_buf_list[id].used = 1;
 
 	// Create object
 	spi_obj->start_comm = spi_start_comm;
@@ -257,19 +257,19 @@ spi_desc_t spi_new(struct spi_class *spi_obj, const struct spi_setting *setting)
 	gpio_new(&spi_info.gpio);
 
 	// Setup port
-	if (spi_setup_port(sd) < 0)
-		return SPI_DESC_ERR;
+	if (spi_setup_port(id) < 0)
+		return SPI_ID_ERR;
 
-	return sd;
+	return id;
 }
 
 
-int spi_free(spi_desc_t spi_desc)
+int spi_free(spi_id_t spi_id)
 {
-	if (spi_desc >= SPI_DESC_MAX || spi_desc_buf[spi_desc].used == 0) 
+	if (spi_id >= OBJ_BUF_SIZE || obj_buf_list[spi_id].used == 0) 
 		return -1;
 
-	memset(&spi_desc_buf[spi_desc], 0, sizeof(struct _spi_desc_buf_));
+	memset(&obj_buf_list[spi_id], 0, sizeof(struct _spi_obj_buf_));
 	
 	return 0;
 }

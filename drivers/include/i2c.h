@@ -21,9 +21,9 @@
 #include <stdint.h>							// uint8_t, uint32_t
 
 
-// I2C descriptor
-typedef int i2c_desc_t;
-#define I2C_DESC_ERR						(-1)
+// I2C ID
+typedef int i2c_id_t;
+#define I2C_ID_ERR						(-1)
 
 // I2C type
 typedef uint8_t i2c_type_t;
@@ -39,13 +39,13 @@ typedef uint8_t i2c_speed_t;
 
 
 struct i2c_class {
-	int (*start_comm) (i2c_desc_t i2c_desc, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
+	int (*start_comm) (i2c_id_t i2c_id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
 };
 
 
 // Prototype
-extern i2c_desc_t i2c_new(struct i2c_class *i2c_obj, i2c_type_t type, i2c_speed_t speed, uint32_t port_scl, uint32_t port_sda);
-extern int i2c_free(i2c_desc_t i2c_desc);
+extern i2c_id_t i2c_new(struct i2c_class *i2c_obj, i2c_type_t type, i2c_speed_t speed, uint32_t port_scl, uint32_t port_sda);
+extern int i2c_free(i2c_id_t i2c_id);
 
 
 #endif

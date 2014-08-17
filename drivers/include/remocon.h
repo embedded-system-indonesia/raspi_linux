@@ -19,9 +19,9 @@
 #include <stdint.h>									// uint8_t, uint32_t
 
 
-// Remocon descriptor
-typedef int rmc_desc_t;
-#define RMC_DESC_ERR						(-1)
+// Remocon ID
+typedef int rmc_id_t;
+#define RMC_ID_ERR						(-1)
 
 // Remocon format
 typedef uint8_t rmc_format_t;
@@ -32,8 +32,8 @@ typedef void (*rmc_callback_func)(uint8_t *data_rcv, uint8_t len);
 
 
 // Prototype
-extern rmc_desc_t rmc_new(rmc_format_t format, uint32_t port_ir, rmc_callback_func callback);
-extern int rmc_free(rmc_desc_t tm1638_desc);
+extern rmc_id_t rmc_new(rmc_format_t format, uint32_t port_ir, rmc_callback_func callback);
+extern int rmc_free(rmc_id_t id);
 
 
 #endif

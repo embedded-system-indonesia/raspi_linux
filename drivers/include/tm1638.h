@@ -59,21 +59,21 @@ union tm1638_format {
 	} com_grid[8];
 };
 
-typedef int tm1638_desc_t;
-#define TM1638_DESC_ERR						(-1)
+typedef int tm1638_id_t;
+#define TM1638_ID_ERR						(-1)
 
 
 struct tm1638_class {
-	int (*display_on)    (tm1638_desc_t tm1638_desc, uint8_t on_off);
-	int (*pulse_width)   (tm1638_desc_t tm1638_desc, tm1638_pulse_t pulse);
-	int (*write_display) (tm1638_desc_t tm1638_desc, const union tm1638_format *data_out);
-	int (*read_key)      (tm1638_desc_t tm1638_desc, uint8_t *data_in);		// 4 bytes of keys
+	int (*display_on)    (tm1638_id_t id, uint8_t on_off);
+	int (*pulse_width)   (tm1638_id_t id, tm1638_pulse_t pulse);
+	int (*write_display) (tm1638_id_t id, const union tm1638_format *data_out);
+	int (*read_key)      (tm1638_id_t id, uint8_t *data_in);		// 4 bytes of keys
 };
 
 
 // Prototype
-extern tm1638_desc_t tm1638_new(struct tm1638_class *tm1638_obj, tm1638_type_t type, uint32_t port_stb, uint32_t port_clk, uint32_t port_dio);
-extern int tm1638_free(tm1638_desc_t tm1638_desc);
+extern tm1638_id_t tm1638_new(struct tm1638_class *tm1638_obj, tm1638_type_t type, uint32_t port_stb, uint32_t port_clk, uint32_t port_dio);
+extern int tm1638_free(tm1638_id_t id);
 
 
 #endif

@@ -22,13 +22,13 @@ int main()
 {
 	struct tm1638_class tm1638;
 	union tm1638_format format;
-	tm1638_desc_t td;
+	tm1638_id_t id;
 	uint8_t ct = 10;
 
-	if ((td = tm1638_new(&tm1638, TM1638_COMMON_SEGMENT, 27, 4, 17)) == TM1638_DESC_ERR)
+	if ((id = tm1638_new(&tm1638, TM1638_COMMON_SEGMENT, 27, 4, 17)) == TM1638_ID_ERR)
 		return -1;
 
-	tm1638.pulse_width(td, TM1638_PULSE_14_16);
+	tm1638.pulse_width(id, TM1638_PULSE_14_16);
 
 	// Assume that we have LED 4 digit 7 segment with common segment
 	memset(&format, 0, sizeof(format));
@@ -70,17 +70,17 @@ int main()
 	format.com_seg[3].grid_6 = 1;
 	format.com_seg[3].grid_7 = 1;
 	
-	tm1638.write_display(td, &format);
+	tm1638.write_display(id, &format);
 
 	while (ct) {
-		tm1638.display_on(td, 1);
+		tm1638.display_on(id, 1);
 		sleep(1);
-		tm1638.display_on(td, 0);
+		tm1638.display_on(id, 0);
 		sleep(1);
 		ct--;
 	}
 	
-	tm1638_free(td);
+	tm1638_free(id);
 	
 	return 0;
 }

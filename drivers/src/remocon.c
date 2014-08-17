@@ -21,7 +21,7 @@
 #include "remocon.h"
 
 
-#define RMC_DESC_MAX		(10)
+#define OBJ_BUF_SIZE		(10)
 #define RMC_DATA_SIZE		(8)
 #define RMC_TM_KASEIKYO		(436)
 #define BW(v)				(1 << (v))
@@ -34,7 +34,7 @@ struct _rmc_bit_ {
 	uint8_t      		buf[RMC_DATA_SIZE];
 };
 
-struct _rmc_desc_buf_ {
+struct _rmc_obj_buf_ {
 	rmc_format_t		format;
 	uint32_t 			port_ir;
 	rmc_callback_func 	callback;
@@ -46,55 +46,55 @@ struct _rmc_desc_buf_ {
 	uint8_t 			used;
 };
 
-static struct _rmc_desc_buf_ rmc_desc_buf[RMC_DESC_MAX];
+static struct _rmc_obj_buf_ obj_buf_list[OBJ_BUF_SIZE];
 
 
-static rmc_desc_t rmc_get_desc(void)
+static int rmc_get_obj_buf_id(void)
 {
-	rmc_desc_t rd = RMC_DESC_ERR;
+	int id = -1;
 
-	for (rd = 0; rd < RMC_DESC_MAX; rd++) {
-		if (rmc_desc_buf[rd].used == 0)
+	for (id = 0; id < OBJ_BUF_SIZE; id++) {
+		if (obj_buf_list[id].used == 0)
 			break;
 	}
 
-	if (rd >= RMC_DESC_MAX)
-		return RMC_DESC_ERR;
+	if (id >= OBJ_BUF_SIZE)
+		return -1;
 
-	return rd;
+	return id;
 }
 
 
-static rmc_desc_t rmc_port_to_desc(uint32_t port)
+static rmc_id_t rmc_port_to_id(uint32_t port)
 {
-	rmc_desc_t rd = RMC_DESC_ERR;
+	rmc_id_t id = RMC_ID_ERR;
 
-	for (rd = 0; rd < RMC_DESC_MAX; rd++) {
-		if (rmc_desc_buf[rd].used == 1 && rmc_desc_buf[rd].port_ir == port)
+	for (id = 0; id < OBJ_BUF_SIZE; id++) {
+		if (obj_buf_list[id].used == 1 && obj_buf_list[id].port_ir == port)
 			break;
 	}
 
-	if (rd >= RMC_DESC_MAX)
-		return RMC_DESC_ERR;
+	if (id >= OBJ_BUF_SIZE)
+		return RMC_ID_ERR;
 	
-	return rd;
+	return id;
 }
 
 
-static void rmc_clear_bits(struct _rmc_desc_buf_ *rd_buf)
+static void rmc_clear_bits(struct _rmc_obj_buf_ *rd_buf)
 {
 	memset(&rd_buf->rmc_bit, 0, sizeof(struct _rmc_bit_));
 }
 
 
-static void rmc_set_lead(struct _rmc_desc_buf_ *rd_buf)
+static void rmc_set_lead(struct _rmc_obj_buf_ *rd_buf)
 {
 	rmc_clear_bits(rd_buf);
 	rd_buf->rmc_bit.lead = 1;
 }
 
 
-int rmc_add_bit(struct _rmc_desc_buf_ *rd_buf, uint8_t on)
+int rmc_add_bit(struct _rmc_obj_buf_ *rd_buf, uint8_t on)
 {
 	if (rd_buf->rmc_bit.lead == 0)
 		rmc_set_lead(rd_buf);
@@ -111,7 +111,7 @@ int rmc_add_bit(struct _rmc_desc_buf_ *rd_buf, uint8_t on)
 }
 
 
-static void rmc_event_callback_kaseikyo(struct _rmc_desc_buf_ *rd_buf)
+static void rmc_event_callback_kaseikyo(struct _rmc_obj_buf_ *rd_buf)
 {
 	if (rd_buf->time_div >= RMC_TM_KASEIKYO && rd_buf->time_div <= (RMC_TM_KASEIKYO * 3 - 1))
 		rmc_add_bit(rd_buf, 0);
@@ -148,15 +148,15 @@ static void rmc_event_callback_kaseikyo(struct _rmc_desc_buf_ *rd_buf)
 
 static void rmc_event_callback(uint32_t port, gpio_event_t event)
 {
-	struct _rmc_desc_buf_ *rd_buf = NULL;
-	rmc_desc_t rd = RMC_DESC_ERR;
+	struct _rmc_obj_buf_ *rd_buf = NULL;
+	rmc_id_t rd = RMC_ID_ERR;
 	struct timeval timeval_now;
 	int ret;
 
-	if ((rd = rmc_port_to_desc(port)) < 0)
+	if ((rd = rmc_port_to_id(port)) < 0)
 		return;
 	
-	rd_buf = &rmc_desc_buf[rd];
+	rd_buf = &obj_buf_list[rd];
 
 	gettimeofday(&timeval_now, NULL);
 	rd_buf->time_now = timeval_now.tv_sec*1E6 + timeval_now.tv_usec;
@@ -171,24 +171,24 @@ static void rmc_event_callback(uint32_t port, gpio_event_t event)
 }
 
 
-rmc_desc_t rmc_new(rmc_format_t format, uint32_t port_ir, rmc_callback_func callback)
+rmc_id_t rmc_new(rmc_format_t format, uint32_t port_ir, rmc_callback_func callback)
 {
-	struct _rmc_desc_buf_ *rd_buf = NULL;
+	struct _rmc_obj_buf_ *rd_buf = NULL;
 	struct timeval timeval_now;
-	rmc_desc_t rd;
+	rmc_id_t rd;
 	
 	if (callback == NULL)
-		return RMC_DESC_ERR;
+		return RMC_ID_ERR;
 
-	if ((rd = rmc_get_desc()) == RMC_DESC_ERR)
-		return RMC_DESC_ERR;
+	if ((rd = rmc_get_obj_buf_id()) < 0)
+		return RMC_ID_ERR;
 
-	rd_buf = &rmc_desc_buf[rd];
+	rd_buf = &obj_buf_list[rd];
 
 	// Create GPIO object
 	if (gpio_new(&rd_buf->gpio_obj) < 0) {
 		printf("<ERROR RMC> can't create GPIO object\n");
-		return RMC_DESC_ERR;
+		return RMC_ID_ERR;
 	}
 
 	// Create event
@@ -215,18 +215,18 @@ rmc_desc_t rmc_new(rmc_format_t format, uint32_t port_ir, rmc_callback_func call
 }
 
 
-int rmc_free(rmc_desc_t rmc_desc)
+int rmc_free(rmc_id_t id)
 {
-	struct _rmc_desc_buf_ *rd_buf = &rmc_desc_buf[rmc_desc];
+	struct _rmc_obj_buf_ *obj_buf = &obj_buf_list[id];
 
-	if (rmc_desc >= RMC_DESC_MAX || rd_buf->used == 0) 
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
 		return -1;
 
 	// Delete event
-	rd_buf->gpio_obj.dis_event(rd_buf->port_ir);
+	obj_buf->gpio_obj.dis_event(obj_buf->port_ir);
 
 	// Clear buffer
-	memset(rd_buf, 0, sizeof(struct _rmc_desc_buf_));
+	memset(obj_buf, 0, sizeof(struct _rmc_obj_buf_));
 	
 	return 0;
 }

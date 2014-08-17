@@ -22,149 +22,150 @@
 #include "ioexp_pcf8574.h"
 
 
-#define DESC_BUF_SIZE				(10)
+#define OBJ_BUF_SIZE				(10)
 #define I2C_SLAVE_ADDR				(0x27)
 #define BW(v)						(1 << (v))
 
 
-struct _desc_buf_ {
+struct _ioexp_obj_buf_ {
 	struct i2c_class 	i2c;
-	i2c_desc_t       	i2c_desc;
+	i2c_id_t       		i2c_id;
 	uint8_t       		ports;	
 	uint8_t 			used;
 };
 
 
-static struct _desc_buf_ desc_buf[DESC_BUF_SIZE];
+static struct _ioexp_obj_buf_ obj_buf_list[OBJ_BUF_SIZE];
 
 
-static int ioexp_pcf8574_get_desc(void)
+static int ioexp_pcf8574_get_obj_buf_id(void)
 {
-	int desc = -1;
-	
-	for (desc = 0; desc < DESC_BUF_SIZE; desc++) {
-		if (desc_buf[desc].used == 0)
+	int id = -1;
+
+	for (id = 0; id < OBJ_BUF_SIZE; id++) {
+		if (obj_buf_list[id].used == 0)
 			break;
 	}
 
-	if (desc >= DESC_BUF_SIZE)
+	if (id >= OBJ_BUF_SIZE)
 		return -1;
 
-	return desc;
+	return id;
 }
 
 
-int ioexp_pcf8574_set_all_port(ioexp_pcf8574_desc_t desc, uint32_t ports)
+
+int ioexp_pcf8574_set_all_port(ioexp_pcf8574_id_t id, uint32_t ports)
 {
-	struct _desc_buf_ *pdesc = &desc_buf[desc];
+	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
 	uint8_t data_out[2];
 	uint8_t len_out;
 
-	if (desc >= DESC_BUF_SIZE || pdesc->used == 0)
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0)
 		return -1;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
 	data_out[1] = (uint8_t)ports;
 	len_out     = 2;
 
-	if (pdesc->i2c.start_comm(pdesc->i2c_desc, data_out, len_out, NULL, 0) < 0)
+	if (obj_buf->i2c.start_comm(obj_buf->i2c_id, data_out, len_out, NULL, 0) < 0)
 		return -1;
 
-	pdesc->ports = data_out[1];
+	obj_buf->ports = data_out[1];
 
 	return 0;	
 }
 
 
-uint32_t ioexp_pcf8574_get_all_port(ioexp_pcf8574_desc_t desc)
+uint32_t ioexp_pcf8574_get_all_port(ioexp_pcf8574_id_t id)
 {
-	struct _desc_buf_ *pdesc = &desc_buf[desc];
+	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
 	uint8_t data_out[1];
 	uint8_t len_out;
 	uint8_t data_in[1];
 	uint8_t len_in;
 
-	if (desc >= DESC_BUF_SIZE || pdesc->used == 0)
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0)
 		return 0;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
 	len_out     = 1;
 
-	if (pdesc->i2c.start_comm(pdesc->i2c_desc, data_out, len_out, data_in, len_in) < 0)
+	if (obj_buf->i2c.start_comm(obj_buf->i2c_id, data_out, len_out, data_in, len_in) < 0)
 		return 0;
 
-	pdesc->ports = data_in[0];
+	obj_buf->ports = data_in[0];
 
-	return (uint32_t)pdesc->ports;	
+	return (uint32_t)obj_buf->ports;	
 }
 
 
-int ioexp_pcf8574_set_one_port(ioexp_pcf8574_desc_t desc, uint32_t port, uint8_t level)
+int ioexp_pcf8574_set_one_port(ioexp_pcf8574_id_t id, uint32_t port, uint8_t level)
 {
-	struct _desc_buf_ *pdesc = &desc_buf[desc];
+	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
 	uint8_t data_out[2];
 	uint8_t len_out;
 
-	if (desc >= DESC_BUF_SIZE || pdesc->used == 0 || port > 8)
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0 || port > 8)
 		return -1;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
 	len_out     = 2;
 	if (level)
-		data_out[1] = pdesc->ports | BW(port);
+		data_out[1] = obj_buf->ports | BW(port);
 	else
-		data_out[1] = pdesc->ports & ~(BW(port));
+		data_out[1] = obj_buf->ports & ~(BW(port));
 
-	if (pdesc->i2c.start_comm(pdesc->i2c_desc, data_out, len_out, NULL, 0) < 0)
+	if (obj_buf->i2c.start_comm(obj_buf->i2c_id, data_out, len_out, NULL, 0) < 0)
 		return -1;
 
-	pdesc->ports = data_out[1];
+	obj_buf->ports = data_out[1];
 
 	return 0;	
 }
 
 
-uint8_t ioexp_pcf8574_get_one_port(ioexp_pcf8574_desc_t desc, uint32_t port)
+uint8_t ioexp_pcf8574_get_one_port(ioexp_pcf8574_id_t id, uint32_t port)
 {
-	struct _desc_buf_ *pdesc = &desc_buf[desc];
+	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
 	uint8_t data_out[1];
 	uint8_t len_out;
 	uint8_t data_in[1];
 	uint8_t len_in;
 	uint8_t ret;
 
-	if (desc >= DESC_BUF_SIZE || pdesc->used == 0 || port > 8)
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0 || port > 8)
 		return 0;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
 	len_out     = 1;
 
-	if (pdesc->i2c.start_comm(pdesc->i2c_desc, data_out, len_out, data_in, len_in) < 0)
+	if (obj_buf->i2c.start_comm(obj_buf->i2c_id, data_out, len_out, data_in, len_in) < 0)
 		return 0;
 
-	pdesc->ports = data_in[0];
-	ret = pdesc->ports & BW(port) ? 1 : 0;
+	obj_buf->ports = data_in[0];
+	ret = obj_buf->ports & BW(port) ? 1 : 0;
 
 	return ret;	
 }
 
 
-ioexp_pcf8574_desc_t ioexp_pcf8574_new(struct ioexp_pcf8574_class *ioexp_obj, uint32_t port_scl, uint32_t port_sda)
+ioexp_pcf8574_id_t ioexp_pcf8574_new(struct ioexp_pcf8574_class *ioexp_obj, uint32_t port_scl, uint32_t port_sda)
 {
-	ioexp_pcf8574_desc_t desc;
-	struct _desc_buf_ *pdesc;
+	ioexp_pcf8574_id_t id;
+	struct _ioexp_obj_buf_ *obj_buf;
 
 	if (ioexp_obj == NULL || port_scl == IOEXP_PCF8574_PORT_UNUSED)
-		return IOEXP_PCF8574_DESC_ERR;
+		return IOEXP_PCF8574_ID_ERR;
 
-	if ((desc = ioexp_pcf8574_get_desc()) < 0)
-		return IOEXP_PCF8574_DESC_ERR;
+	if ((id = ioexp_pcf8574_get_obj_buf_id()) < 0)
+		return IOEXP_PCF8574_ID_ERR;
 
-	pdesc = &desc_buf[desc];
+	obj_buf = &obj_buf_list[id];
 
 	// Create I2C object
-	if ((pdesc->i2c_desc = i2c_new(&pdesc->i2c, I2C_TYPE_SOFT_MASTER, I2C_SPEED_FULL, port_scl, port_sda)) == I2C_DESC_ERR)
-		return IOEXP_PCF8574_DESC_ERR;
+	if ((obj_buf->i2c_id = i2c_new(&obj_buf->i2c, I2C_TYPE_SOFT_MASTER, I2C_SPEED_FULL, port_scl, port_sda)) == I2C_ID_ERR)
+		return IOEXP_PCF8574_ID_ERR;
 
 	ioexp_obj->set_all_port = ioexp_pcf8574_set_all_port;
 	ioexp_obj->get_all_port = ioexp_pcf8574_get_all_port;
@@ -172,24 +173,24 @@ ioexp_pcf8574_desc_t ioexp_pcf8574_new(struct ioexp_pcf8574_class *ioexp_obj, ui
 	ioexp_obj->get_one_port = ioexp_pcf8574_get_one_port;
 
 	// Mark as used
-	pdesc->used = 1;
+	obj_buf->used = 1;
 
-	return desc;
+	return id;
 }
 
 
-int ioexp_pcf8574_free(ioexp_pcf8574_desc_t ioexp_pcf8574_desc)
+int ioexp_pcf8574_free(ioexp_pcf8574_id_t id)
 {
-	struct _desc_buf_ *pdesc = &desc_buf[ioexp_pcf8574_desc];
+	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
 
-	if (ioexp_pcf8574_desc >= DESC_BUF_SIZE || pdesc->used == 0) 
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
 		return -1;
 	
 	// Delete I2C object
-	i2c_free(pdesc->i2c_desc);
+	i2c_free(obj_buf->i2c_id);
 
 	// Clear buffer
-	memset(pdesc, 0, sizeof(struct _desc_buf_));
+	memset(obj_buf, 0, sizeof(struct _ioexp_obj_buf_));
 	
 	return 0;
 }

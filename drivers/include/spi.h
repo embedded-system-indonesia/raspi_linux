@@ -18,9 +18,9 @@
 
 #include <stdint.h>							// uint8_t, uint32_t
 
-// SPI descriptor
-typedef int spi_desc_t;
-#define SPI_DESC_ERR						(-1)
+// SPI ID
+typedef int spi_id_t;
+#define SPI_ID_ERR						(-1)
 
 // SPI type
 typedef int spi_type_t;
@@ -40,13 +40,13 @@ struct spi_setting {
 };
 
 struct spi_class {
-	int (*start_comm) (spi_desc_t spi_desc, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
+	int (*start_comm) (spi_id_t spi_id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
 };
 
 
 // Prototype
-extern spi_desc_t spi_new(struct spi_class *spi_obj, const struct spi_setting *setting);
-extern int spi_free(spi_desc_t spi_desc);
+extern spi_id_t spi_new(struct spi_class *spi_obj, const struct spi_setting *setting);
+extern int spi_free(spi_id_t spi_id);
 
 #endif
 
