@@ -20,12 +20,12 @@
 
 int main()
 {
-	struct tm1638_class tm1638;
-	union tm1638_format format;
-	tm1638_id_t id;
+	tm1638_class_t tm1638;
+	tm1638_format_t format;
+	int id;
 	uint8_t ct = 10;
 
-	if ((id = tm1638_new(&tm1638, TM1638_COMMON_SEGMENT, 27, 4, 17)) == TM1638_ID_ERR)
+	if ((id = tm1638_new(&tm1638, TM1638_COMMON_SEGMENT, 27, 4, 17)) < 0)
 		return -1;
 
 	tm1638.pulse_width(id, TM1638_PULSE_14_16);

@@ -22,25 +22,17 @@
 #include <stdint.h>							// uint8_t, uint32_t
 
 
-// IO expander ID
-typedef int ioexp_pcf8574_id_t;
-#define IOEXP_PCF8574_ID_ERR				(-1)
-
-// IO expander port
-#define IOEXP_PCF8574_PORT_UNUSED			(0xFFFF)
-
-
-struct ioexp_pcf8574_class {
-	int      (*set_all_port) (ioexp_pcf8574_id_t id, uint32_t ports);
-	uint32_t (*get_all_port) (ioexp_pcf8574_id_t id);
-	int      (*set_one_port) (ioexp_pcf8574_id_t id, uint32_t port, uint8_t level);
-	uint8_t  (*get_one_port) (ioexp_pcf8574_id_t id, uint32_t port);	
-};
+typedef struct {
+	int      (*set_all_port) (int id, int ports);
+	uint32_t (*get_all_port) (int id);
+	int      (*set_one_port) (int id, int port, uint8_t level);
+	uint8_t  (*get_one_port) (int id, int port);	
+} iopcf_class_t;
 
 
 // Prototype
-extern ioexp_pcf8574_id_t ioexp_pcf8574_new(struct ioexp_pcf8574_class *ioexp_obj, uint32_t port_scl, uint32_t port_sda);
-extern int ioexp_pcf8574_free(ioexp_pcf8574_id_t id);
+extern int ioexp_pcf8574_new(iopcf_class_t *ioexp_obj, int port_scl, int port_sda);
+extern int ioexp_pcf8574_free(int id);
 
 
 #endif

@@ -21,9 +21,9 @@
 #include "remocon.h"
 
 
-static struct gpio_class gpio;
-static uint32_t port_led_1 = 9;
-static uint32_t port_led_2 = 10;
+static gpio_class_t gpio;
+static int port_led_1 = 9;
+static int port_led_2 = 10;
 
 
 static void rmc_callback(uint8_t *data_rcv, uint8_t len)
@@ -51,11 +51,11 @@ static void rmc_callback(uint8_t *data_rcv, uint8_t len)
 
 int main()
 {
-	rmc_id_t id;
-	uint32_t port_ir = 18;  // Infra red port number
+	int id;
+	int port_ir = 18;  // Infra red port number
 	
 	// Create remocon id
-	if ((id = rmc_new(RMC_FORMAT_KASEIKYO, port_ir, rmc_callback)) == RMC_ID_ERR)
+	if ((id = rmc_new(RMC_FORMAT_KASEIKYO, port_ir, rmc_callback)) < 0)
 		return -1;
 
 	// Create GPIO object

@@ -64,27 +64,27 @@
 #define BLOCK_SIZE						(4 * 1024)
 
 
-struct _gpio_setting_ {
+typedef struct {
 	gpio_mode_t   		mode;
 	uint8_t		 		level;
 	gpio_pull_t   		pull;
 	gpio_event_t  		event;
 	gpio_ev_callback 	evclback;
 	int           		fd;
-};
+} gpio_setting_t;
 
-struct _gpio_info_ {
+typedef struct {
 	int 				epoll;
 	uint8_t				thread_on;
 	int           		fd_map;
 	volatile uint32_t 	*map_gpio;
 	uint8_t				init;
-};
+} gpio_info_t;
 
 
 // Prototype descriptions
-static struct _gpio_setting_ gpio_setting[GPIO_PORT_MAX];
-static struct _gpio_info_    gpio_info;
+static gpio_setting_t gpio_setting[GPIO_PORT_MAX];
+static gpio_info_t    gpio_info;
 
 
 const uint8_t TBL_GPIO_FSEL_OFFSET[]  = {
@@ -106,7 +106,16 @@ const uint8_t TBL_GPIO_FSEL_SHIFT[]  = {
 };
 
 
-static int gpio_dis_event(uint32_t port);
+static int gpio_dis_event(int port);
+
+
+static int gpio_is_valid_port(int port)
+{
+	if (port >= GPIO_PORT_MAX || port < 0 || gpio_info.init == 0)
+		return 0;
+	
+	return 1;
+}
 
 
 static int gpio_file_write_str(const char *file_name, const char *arg, int len)
@@ -150,7 +159,7 @@ static void gpio_delay_cyc(uint32_t cyc)
 }
 
 
-static int gpio_set_edge(uint32_t port, gpio_event_t event)
+static int gpio_set_edge(int port, gpio_event_t event)
 {
 	char str_file[256];
 	char str_arg[10];
@@ -179,7 +188,7 @@ static void *gpio_thread_event(void *arg)
 {
     struct epoll_event ep_event;
     int n;
-	uint32_t port;
+	int port;
     char buf;
 	uint8_t ev_init = 0;
 
@@ -217,7 +226,7 @@ static void *gpio_thread_event(void *arg)
 }
 
 
-static int gpio_set_mode(uint32_t port, gpio_mode_t mode)
+static int gpio_set_mode(int port, gpio_mode_t mode)
 {
 	uint8_t offset, shift, mode_sel;
 	
@@ -241,20 +250,20 @@ static int gpio_set_mode(uint32_t port, gpio_mode_t mode)
 }
 
 
-static gpio_mode_t gpio_get_mode(uint32_t port)
+static gpio_mode_t gpio_get_mode(int port)
 {
-	if (port >= GPIO_PORT_MAX || gpio_info.init == 0)
+	if (!gpio_is_valid_port(port))
 		return GPIO_MODE_INPUT;
 
 	return gpio_setting[port].mode;
 }
 
 
-static int gpio_set_level(uint32_t port, uint8_t level)
+static int gpio_set_level(int port, uint8_t level)
 {
 	uint8_t offset;
 	
-	if (port >= GPIO_PORT_MAX || gpio_info.init == 0)
+	if (!gpio_is_valid_port(port))
 		return -1;
 
 	if (level)
@@ -270,20 +279,20 @@ static int gpio_set_level(uint32_t port, uint8_t level)
 }
 
 
-static uint8_t gpio_get_level(uint32_t port)
+static uint8_t gpio_get_level(int port)
 {
-	if (port >= GPIO_PORT_MAX || gpio_info.init == 0)
+	if (!gpio_is_valid_port(port))
 		return 0;
 
 	return gpio_setting[port].level;
 }
 
 
-int gpio_set_pull(uint32_t port, gpio_pull_t pull)
+int gpio_set_pull(int port, gpio_pull_t pull)
 {
 	uint8_t offset_ena, offset_clk, pullval;
 
-	if (port >= GPIO_PORT_MAX || gpio_info.init == 0)
+	if (!gpio_is_valid_port(port))
 		return -1;
 
 	offset_ena = GPIO_OFFSET_PULL_ENA;
@@ -312,22 +321,22 @@ int gpio_set_pull(uint32_t port, gpio_pull_t pull)
 }
 
 
-static gpio_pull_t gpio_get_pull(uint32_t port)
+static gpio_pull_t gpio_get_pull(int port)
 {
-	if (port >= GPIO_PORT_MAX || gpio_info.init == 0)
+	if (!gpio_is_valid_port(port))
 		return GPIO_PULL_NONE;
 
 	return gpio_setting[port].pull;
 }
 
 
-static int gpio_ena_event(uint32_t port, gpio_event_t event, gpio_ev_callback evclback)
+static int gpio_ena_event(int port, gpio_event_t event, gpio_ev_callback evclback)
 {
     struct epoll_event ep_event;
     pthread_t thread_id;
 	char str_file[256];
 
-	if (port >= GPIO_PORT_MAX || gpio_info.init == 0  || evclback == NULL)
+	if (!gpio_is_valid_port(port) || evclback == NULL)
 		return -1;
 
 	// Set input
@@ -378,11 +387,11 @@ static int gpio_ena_event(uint32_t port, gpio_event_t event, gpio_ev_callback ev
 }
 
 
-static int gpio_dis_event(uint32_t port)
+static int gpio_dis_event(int port)
 {
     struct epoll_event ep_event;
 
-	if (port >= GPIO_PORT_MAX || gpio_info.init == 0)
+	if (!gpio_is_valid_port(port))
 		return -1;
 
 	// Remove epol
@@ -410,7 +419,7 @@ static uint8_t gpio_get_port_num(void)
 }
 
 
-int gpio_new(struct gpio_class *gpio_obj)
+int gpio_new(gpio_class_t *gpio_obj)
 {
 	if (gpio_obj == NULL)
 		return -1;

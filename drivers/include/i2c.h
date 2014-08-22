@@ -21,9 +21,22 @@
 #include <stdint.h>							// uint8_t, uint32_t
 
 
-// I2C ID
-typedef int i2c_id_t;
-#define I2C_ID_ERR						(-1)
+/*
+ * Parameter "int port_xx"
+ *       port_xx < 0  : unused port
+ *       port_xx >= 0 : valid port
+ *
+ * Parameter "int id"
+ *       id < 0  : invalid ID
+ *       id >= 0 : valid ID
+ *       *) id will be used to select device
+ *
+ * Return function "int"
+ *       ret < 0 : error
+ *       ret = 0 : OK
+ *       *) special for function "i2c_new", it will return ID
+ */
+
 
 // I2C type
 typedef uint8_t i2c_type_t;
@@ -34,18 +47,15 @@ typedef uint8_t i2c_speed_t;
 #define I2C_SPEED_HIGH						(0)
 #define I2C_SPEED_FULL						(1)
 
-// I2C port
-#define I2C_PORT_UNUSED						(0xFFFF)
 
-
-struct i2c_class {
-	int (*start_comm) (i2c_id_t i2c_id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
-};
+typedef struct {
+	int (*start_comm) (int id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
+} i2c_class_t;
 
 
 // Prototype
-extern i2c_id_t i2c_new(struct i2c_class *i2c_obj, i2c_type_t type, i2c_speed_t speed, uint32_t port_scl, uint32_t port_sda);
-extern int i2c_free(i2c_id_t i2c_id);
+extern int i2c_new(i2c_class_t *i2c_obj, i2c_type_t type, i2c_speed_t speed, int port_scl, int port_sda);
+extern int i2c_free(int id);
 
 
 #endif

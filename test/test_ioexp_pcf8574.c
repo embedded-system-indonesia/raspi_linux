@@ -21,10 +21,10 @@
 
 int main()
 {
-	struct ioexp_pcf8574_class ioexp_obj;
-	ioexp_pcf8574_id_t id;
+	iopcf_class_t ioexp_obj;
+	int id;
 
-	if ((id = ioexp_pcf8574_new(&ioexp_obj, 23, 24)) == IOEXP_PCF8574_ID_ERR)
+	if ((id = ioexp_pcf8574_new(&ioexp_obj, 23, 24)) < 0)
 		return -1;
 
 	ioexp_obj.set_all_port(id, 0xFF);

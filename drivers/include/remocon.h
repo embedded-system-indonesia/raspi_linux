@@ -19,21 +19,17 @@
 #include <stdint.h>									// uint8_t, uint32_t
 
 
-// Remocon ID
-typedef int rmc_id_t;
-#define RMC_ID_ERR						(-1)
-
 // Remocon format
 typedef uint8_t rmc_format_t;
 #define RMC_FORMAT_KASEIKYO					(0)
 
 // Callback function
-typedef void (*rmc_callback_func)(uint8_t *data_rcv, uint8_t len);
+typedef void (*rmc_callback_func)(uint8_t *data_rcv, int len);
 
 
 // Prototype
-extern rmc_id_t rmc_new(rmc_format_t format, uint32_t port_ir, rmc_callback_func callback);
-extern int rmc_free(rmc_id_t id);
+extern int rmc_new(rmc_format_t format, int port_ir, rmc_callback_func callback); // return id
+extern int rmc_free(int id);
 
 
 #endif

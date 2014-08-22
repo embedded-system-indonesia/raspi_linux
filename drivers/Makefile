@@ -33,6 +33,7 @@ CSRC  += $(SRCDIR)/i2c.c
 CSRC  += $(SRCDIR)/tm1638.c
 CSRC  += $(SRCDIR)/remocon.c
 CSRC  += $(SRCDIR)/ioexp_pcf8574.c
+CSRC  += $(SRCDIR)/lcd_nokia5110.c
 
 # Define Assembly sources
 ASRC   = 

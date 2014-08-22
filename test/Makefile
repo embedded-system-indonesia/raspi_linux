@@ -33,6 +33,7 @@ PREFIX = arm-linux-gnueabihf-
 # CSRC   = $(SRCDIR)/test_remocon.c
 # CSRC   = $(SRCDIR)/test_i2c.c
 CSRC   = $(SRCDIR)/test_ioexp_pcf8574.c
+# CSRC   = $(SRCDIR)/test_lcd_nokia5110.c
 
 # Define Assembly sources
 ASRC   = 

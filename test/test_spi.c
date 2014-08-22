@@ -21,12 +21,12 @@
 
 int main()
 {
-	struct spi_class   spi;
-	struct spi_setting setting;
-	spi_id_t           spi_id;
-	uint8_t            data_out[20], data_in[20];
-	uint32_t           len_out, len_in;
-	uint8_t            ct = 10;
+	spi_class_t    spi;
+	spi_setting_t  setting;
+	int       spi_id;
+	uint8_t   data_out[20], data_in[20];
+	uint32_t  len_out, len_in;
+	uint8_t   ct = 10;
 
 	setting.type      = SPI_TYPE_SOFT_MASTER;
 	setting.port_cs   = 27;
@@ -38,7 +38,7 @@ int main()
 
 	spi_id = spi_new(&spi, &setting);
 
-	if (spi_id != SPI_ID_ERR) {
+	if (spi_id >= 0) {
 		data_out[0] = 0x40;
 		len_out     = 1;
 		spi.start_comm(spi_id, data_out, len_out, NULL, 0);

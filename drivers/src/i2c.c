@@ -28,20 +28,20 @@
 #define BW(v)					(1 << (v))
 
 
-struct _i2c_obj_buf_ {
+typedef struct {
 	i2c_type_t 		type;
 	i2c_speed_t		speed;
-	uint32_t 		port_scl;
-	uint32_t 		port_sda;
+	int 			port_scl;
+	int		 		port_sda;
 	uint8_t 		used;
-};
+} i2c_obj_buf_t;
 
-struct _i2c_info_ {
-	struct gpio_class	gpio_obj;
-};
+typedef struct {
+	gpio_class_t	gpio_obj;
+} i2c_info_t;
 
-static struct _i2c_obj_buf_ obj_buf_list[OBJ_BUF_SIZE];
-static struct _i2c_info_ i2c_info;
+static i2c_obj_buf_t obj_buf_list[OBJ_BUF_SIZE];
+static i2c_info_t    i2c_info;
 
 
 static int i2c_get_obj_buf_id(void)
@@ -60,13 +60,25 @@ static int i2c_get_obj_buf_id(void)
 }
 
 
-static int i2c_start_comm_soft_mst(struct _i2c_obj_buf_ *obj_buf, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
+static i2c_obj_buf_t *i2c_get_obj_buf(int id)
 {
+	i2c_obj_buf_t *obj_buf = &obj_buf_list[id];
+
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
+		return NULL;
+
+	return obj_buf;
+}
+
+
+static int i2c_start_comm_soft_mst(int id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
+{
+	i2c_obj_buf_t *obj_buf  = i2c_get_obj_buf(id);
+	gpio_class_t  *gpio_obj = &i2c_info.gpio_obj;
 	uint32_t bit_delay = (obj_buf->speed == I2C_SPEED_HIGH) ? I2C_BIT_DELAY_HIGH : I2C_BIT_DELAY_FULL;
 	uint32_t ctdat = 0;
 	uint8_t  ctbit = 0;
-	struct gpio_class *gpio_obj = &i2c_info.gpio_obj;
-	uint8_t error = 0;
+	uint8_t  error = 0;
 
 	// Set mode port
 	gpio_obj->set_mode(obj_buf->port_sda, GPIO_MODE_OUTPUT);
@@ -156,17 +168,17 @@ static int i2c_start_comm_soft_mst(struct _i2c_obj_buf_ *obj_buf, uint8_t *data_
 }
 
 
-static int i2c_start_comm(i2c_id_t i2c_id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
+static int i2c_start_comm(int id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in)
 {
-	struct _i2c_obj_buf_ *obj_buf = &obj_buf_list[i2c_id];
+	i2c_obj_buf_t *obj_buf  = i2c_get_obj_buf(id);
 	int ret = -1;
 
-	if (i2c_id >= OBJ_BUF_SIZE || obj_buf->used == 0 || data_out == NULL || len_out == 0)
+	if (obj_buf == NULL || data_out == NULL || len_out == 0)
 		return -1;
 	
 	switch (obj_buf->type) {
 	case I2C_TYPE_SOFT_MASTER:
-		ret = i2c_start_comm_soft_mst(obj_buf, data_out, len_out, data_in, len_in);
+		ret = i2c_start_comm_soft_mst(id, data_out, len_out, data_in, len_in);
 		break;
 	}
 	
@@ -174,22 +186,22 @@ static int i2c_start_comm(i2c_id_t i2c_id, uint8_t *data_out, uint32_t len_out, 
 }
 
 
-i2c_id_t i2c_new(struct i2c_class *i2c_obj, i2c_type_t type, i2c_speed_t speed, uint32_t port_scl, uint32_t port_sda)
+int i2c_new(i2c_class_t *i2c_obj, i2c_type_t type, i2c_speed_t speed, int port_scl, int port_sda)
 {
-	i2c_id_t id;
-	struct _i2c_obj_buf_ *obj_buf;
+	int id;
+	i2c_obj_buf_t *obj_buf;
 	
-	if (i2c_obj == NULL || port_scl == I2C_PORT_UNUSED)
-		return I2C_ID_ERR;
+	if (i2c_obj == NULL || port_scl < 0)
+		return -1;
 
 	if ((id = i2c_get_obj_buf_id()) < 0)
-		return I2C_ID_ERR;
+		return -1;
 
 	obj_buf = &obj_buf_list[id];
 
 	// Load GPIO
 	if (gpio_new(&i2c_info.gpio_obj) < 0)
-		return I2C_ID_ERR;
+		return -1;
 
 	obj_buf->type     = type;
 	obj_buf->speed    = speed;
@@ -203,12 +215,14 @@ i2c_id_t i2c_new(struct i2c_class *i2c_obj, i2c_type_t type, i2c_speed_t speed, 
 }
 
 
-int i2c_free(i2c_id_t i2c_id)
+int i2c_free(int id)
 {
-	if (i2c_id >= OBJ_BUF_SIZE || obj_buf_list[i2c_id].used == 0) 
+	i2c_obj_buf_t *obj_buf = i2c_get_obj_buf(id);
+
+	if (obj_buf == NULL)
 		return -1;
 
-	memset(&obj_buf_list[i2c_id], 0, sizeof(struct _i2c_obj_buf_));
+	memset(&obj_buf_list[id], 0, sizeof(i2c_obj_buf_t));
 	
 	return 0;
 }

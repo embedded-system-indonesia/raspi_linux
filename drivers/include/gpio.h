@@ -18,6 +18,16 @@
 
 #include <stdint.h>							// uint8_t, uint32_t
 
+/*
+ * Parameter "int port_xx"
+ *       port_xx < 0  : unused port
+ *       port_xx >= 0 : valid port
+ *
+ * Return function "int"
+ *       ret < 0 : error
+ *       ret = 0 : OK
+ */
+
 
 typedef uint8_t gpio_mode_t;
 #define GPIO_MODE_INPUT						(0)
@@ -33,24 +43,24 @@ typedef uint8_t gpio_event_t;
 #define GPIO_EVENT_RISE_EDGE				(1)
 #define GPIO_EVENT_FALL_EDGE				(2)
 
-typedef void (*gpio_ev_callback) (uint32_t port, gpio_event_t event);
+typedef void (*gpio_ev_callback) (int port, gpio_event_t event);
 
 
-struct gpio_class {
-	int           (*set_mode)     (uint32_t port, gpio_mode_t mode);
-	gpio_mode_t   (*get_mode)     (uint32_t port);
-	int           (*set_level)    (uint32_t port, uint8_t level);
-	uint8_t       (*get_level)    (uint32_t port);
-	int           (*set_pull)     (uint32_t port, gpio_pull_t pull);
-	gpio_pull_t   (*get_pull)     (uint32_t port);
-	int           (*ena_event)    (uint32_t port, gpio_event_t event, gpio_ev_callback evclback);
-	int           (*dis_event)    (uint32_t port);
+typedef struct {
+	int           (*set_mode)     (int port, gpio_mode_t mode);
+	gpio_mode_t   (*get_mode)     (int port);
+	int           (*set_level)    (int port, uint8_t level);
+	uint8_t       (*get_level)    (int port);
+	int           (*set_pull)     (int port, gpio_pull_t pull);
+	gpio_pull_t   (*get_pull)     (int port);
+	int           (*ena_event)    (int port, gpio_event_t event, gpio_ev_callback evclback);
+	int           (*dis_event)    (int port);
 	uint8_t       (*get_port_num) (void);
-};
+} gpio_class_t;
 
 
 // Prototype
-extern int gpio_new(struct gpio_class *gpio_obj);
+extern int gpio_new(gpio_class_t *gpio_obj);
 extern int gpio_free(void);
 
 #endif

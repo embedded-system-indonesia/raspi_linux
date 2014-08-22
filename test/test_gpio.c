@@ -20,8 +20,8 @@
 int main()
 {
 	uint8_t ct = 10;
-	uint8_t led1, led2;
-	struct gpio_class gpio;
+	int led1, led2;
+	gpio_class_t gpio;
 
 	gpio_new(&gpio);
 
@@ -40,6 +40,9 @@ int main()
 		sleep(1);
 		ct --;
 	}
+	
+	gpio.set_pull(led2, GPIO_PULL_DOWN);
+	gpio.set_level(led1, 0);
 
 	gpio_free();
 	

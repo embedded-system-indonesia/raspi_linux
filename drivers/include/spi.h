@@ -18,35 +18,45 @@
 
 #include <stdint.h>							// uint8_t, uint32_t
 
-// SPI ID
-typedef int spi_id_t;
-#define SPI_ID_ERR						(-1)
+/*
+ * Parameter "int port_xx"
+ *       port_xx < 0  : unused port
+ *       port_xx >= 0 : valid port
+ *
+ * Parameter "int id"
+ *       id < 0  : invalid ID
+ *       id >= 0 : valid ID
+ *       *) id will be used to select device
+ *
+ * Return function "int"
+ *       ret < 0 : error
+ *       ret = 0 : OK
+ *       *) special for function "spi_new", it will return ID
+ */
+
 
 // SPI type
 typedef int spi_type_t;
 #define SPI_TYPE_SOFT_MASTER				(0)
 
-#define SPI_PORT_UNUSED						(0xFFFF)
-
-
-struct spi_setting {
+typedef struct {
 	spi_type_t type;
-	uint32_t   port_cs;
-	uint32_t   port_clk;
-	uint32_t   port_do;
-	uint32_t   port_di;
+	int        port_cs;
+	int        port_clk;
+	int        port_do;
+	int        port_di;
 	uint8_t    msb;
 	uint8_t    fullplex;
-};
+} spi_setting_t;
 
-struct spi_class {
-	int (*start_comm) (spi_id_t spi_id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
-};
+typedef struct {
+	int (*start_comm) (int id, uint8_t *data_out, uint32_t len_out, uint8_t *data_in, uint32_t len_in);
+} spi_class_t;
 
 
 // Prototype
-extern spi_id_t spi_new(struct spi_class *spi_obj, const struct spi_setting *setting);
-extern int spi_free(spi_id_t spi_id);
+extern int spi_new(spi_class_t *spi_obj, const spi_setting_t *setting);
+extern int spi_free(int id);
 
 #endif
 

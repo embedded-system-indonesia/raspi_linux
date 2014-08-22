@@ -23,24 +23,24 @@
 #define I2C_SLAVE_ADDR		(0x27)
 
 
-static void make_data(uint8_t *data_out, uint32_t *len_out, uint8_t port)
+static void make_data(uint8_t *data_out, uint32_t *len_out, int port)
 {
 	data_out[0] = I2C_SLAVE_ADDR << 1;
-	data_out[1] = port;
+	data_out[1] = (uint8_t)port;
 	*len_out    = 2;
 }
 
 
 int main()
 {
-	struct i2c_class i2c_obj;
-	i2c_id_t   i2c_id;
-	uint8_t    data_out[2];
-	uint32_t   len_out;
-	uint16_t   ct = 0;
-	uint16_t   port = 0;
+	i2c_class_t i2c_obj;
+	int         i2c_id;
+	uint8_t     data_out[2];
+	uint32_t    len_out;
+	uint16_t    ct = 0;
+	int         port = 0;
 
-	if ((i2c_id = i2c_new(&i2c_obj, I2C_TYPE_SOFT_MASTER, I2C_SPEED_FULL, 23, 24)) == I2C_ID_ERR)
+	if ((i2c_id = i2c_new(&i2c_obj, I2C_TYPE_SOFT_MASTER, I2C_SPEED_FULL, 23, 24)) < 0)
 		return -1;
 
 	// Loop forever, can add timeout if necessary

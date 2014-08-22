@@ -23,16 +23,16 @@
 #define OBJ_BUF_SIZE		(10)
 
 
-struct _tm1638_obj_buf_ {
+typedef struct {
 	tm1638_type_t    	type;
-	struct spi_class 	spi;
-	spi_id_t       		spi_id;
+	spi_class_t 		spi;
+	int       			spi_id;
 	tm1638_pulse_t   	pulse;
 	uint8_t         	display_on;
 	uint8_t 		   	used;
-};
+} tm1638_obj_buf_t;
 
-static struct _tm1638_obj_buf_ obj_buf_list[OBJ_BUF_SIZE];
+static tm1638_obj_buf_t obj_buf_list[OBJ_BUF_SIZE];
 
 
 static int tm1638_get_obj_buf_id(void)
@@ -51,13 +51,24 @@ static int tm1638_get_obj_buf_id(void)
 }
 
 
-static int tm1638_display_on(tm1638_id_t id, uint8_t on_off)
+static tm1638_obj_buf_t *tm1638_get_obj_buf(int id)
 {
-	struct _tm1638_obj_buf_ *obj_buf = &obj_buf_list[id];
+	tm1638_obj_buf_t *obj_buf = &obj_buf_list[id];
+
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
+		return NULL;
+
+	return obj_buf;
+}
+
+
+static int tm1638_display_on(int id, uint8_t on_off)
+{
+	tm1638_obj_buf_t *obj_buf = tm1638_get_obj_buf(id);
 	uint8_t buf[1];
 	uint8_t buf_len;
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
+	if (obj_buf == NULL)
 		return -1;
 
 	buf[0]  = 0x80;
@@ -73,13 +84,13 @@ static int tm1638_display_on(tm1638_id_t id, uint8_t on_off)
 }
 
 
-static int tm1638_pulse_width(tm1638_id_t id, tm1638_pulse_t pulse)
+static int tm1638_pulse_width(int id, tm1638_pulse_t pulse)
 {
-	struct _tm1638_obj_buf_ *obj_buf = &obj_buf_list[id];
+	tm1638_obj_buf_t *obj_buf = tm1638_get_obj_buf(id);
 	uint8_t buf[1];
 	uint8_t buf_len;
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
+	if (obj_buf == NULL)
 		return -1;
 
 	buf[0]  = 0x80;
@@ -95,14 +106,14 @@ static int tm1638_pulse_width(tm1638_id_t id, tm1638_pulse_t pulse)
 }
 
 
-static int tm1638_write_display(tm1638_id_t id, const union tm1638_format *data_out)
+static int tm1638_write_display(int id, const tm1638_format_t *data_out)
 {
-	struct _tm1638_obj_buf_ *obj_buf = &obj_buf_list[id];
+	tm1638_obj_buf_t *obj_buf = tm1638_get_obj_buf(id);
 	uint8_t buf[17];
 	uint8_t buf_len;
 	uint8_t seg, grid;
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0 || data_out == NULL) 
+	if (obj_buf == NULL || data_out == NULL) 
 		return -1;
 
 	// Set data command
@@ -146,28 +157,28 @@ static int tm1638_write_display(tm1638_id_t id, const union tm1638_format *data_
 }
 
 
-static int tm1638_read_key(tm1638_id_t id, uint8_t *data_in)
+static int tm1638_read_key(int id, uint8_t *data_in)
 {
-	struct _tm1638_obj_buf_ *obj_buf = &obj_buf_list[id];
+	tm1638_obj_buf_t *obj_buf = tm1638_get_obj_buf(id);
 	
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0 || data_in == NULL) 
+	if (obj_buf == NULL || data_in == NULL) 
 		return -1;
 
 	return 0;
 }
 
 
-tm1638_id_t tm1638_new(struct tm1638_class *tm1638_obj, tm1638_type_t type, uint32_t port_stb, uint32_t port_clk, uint32_t port_dio)
+int tm1638_new(tm1638_class_t *tm1638_obj, tm1638_type_t type, int port_stb, int port_clk, int port_dio)
 {
-	struct _tm1638_obj_buf_ *obj_buf = NULL;
-	struct spi_setting setting;
-	tm1638_id_t id;
+	tm1638_obj_buf_t *obj_buf = NULL;
+	spi_setting_t setting;
+	int id;
 
 	if (tm1638_obj == NULL)
-		return TM1638_ID_ERR;
+		return -1;
 
 	if ((id = tm1638_get_obj_buf_id()) < 0)
-		return TM1638_ID_ERR;
+		return -1;
 
 	obj_buf = &obj_buf_list[id];
 
@@ -179,9 +190,9 @@ tm1638_id_t tm1638_new(struct tm1638_class *tm1638_obj, tm1638_type_t type, uint
 	setting.port_di   = port_dio;
 	setting.fullplex  = 0;
 	setting.msb       = 0;
-	if ((obj_buf->spi_id = spi_new(&obj_buf->spi, &setting)) == SPI_ID_ERR) {
+	if ((obj_buf->spi_id = spi_new(&obj_buf->spi, &setting)) < 0) {
 		printf("<error tm1638_new> can't create SPI object\n");
-		return TM1638_ID_ERR;
+		return -1;
 	}
 
 	obj_buf->type = type;
@@ -196,18 +207,18 @@ tm1638_id_t tm1638_new(struct tm1638_class *tm1638_obj, tm1638_type_t type, uint
 }
 
 
-int tm1638_free(tm1638_id_t id)
+int tm1638_free(int id)
 {
-	struct _tm1638_obj_buf_ *obj_buf = &obj_buf_list[id];
+	tm1638_obj_buf_t *obj_buf = tm1638_get_obj_buf(id);
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
+	if (obj_buf == NULL)
 		return -1;
 	
 	// Delete SPI object
 	spi_free(obj_buf->spi_id);
 
 	// Clear buffer
-	memset(obj_buf, 0, sizeof(struct _tm1638_obj_buf_));
+	memset(obj_buf, 0, sizeof(tm1638_obj_buf_t));
 	
 	return 0;
 }

@@ -27,18 +27,18 @@
 #define BW(v)						(1 << (v))
 
 
-struct _ioexp_obj_buf_ {
-	struct i2c_class 	i2c;
-	i2c_id_t       		i2c_id;
-	uint8_t       		ports;	
-	uint8_t 			used;
-};
+typedef struct {
+	i2c_class_t 	i2c;
+	int       		i2c_id;
+	uint8_t     	ports;	
+	uint8_t 		used;
+} ioexp_obj_buf_t;
 
 
-static struct _ioexp_obj_buf_ obj_buf_list[OBJ_BUF_SIZE];
+static ioexp_obj_buf_t obj_buf_list[OBJ_BUF_SIZE];
 
 
-static int ioexp_pcf8574_get_obj_buf_id(void)
+static int ioexp_get_obj_buf_id(void)
 {
 	int id = -1;
 
@@ -54,14 +54,24 @@ static int ioexp_pcf8574_get_obj_buf_id(void)
 }
 
 
-
-int ioexp_pcf8574_set_all_port(ioexp_pcf8574_id_t id, uint32_t ports)
+static ioexp_obj_buf_t *ioexp_get_obj_buf(int id)
 {
-	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
+	ioexp_obj_buf_t *obj_buf = &obj_buf_list[id];
+
+	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
+		return NULL;
+
+	return obj_buf;
+}
+
+
+int ioexp_set_all_port(int id, int ports)
+{
+	ioexp_obj_buf_t *obj_buf = ioexp_get_obj_buf(id);
 	uint8_t data_out[2];
 	uint8_t len_out;
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0)
+	if (obj_buf == NULL)
 		return -1;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
@@ -77,16 +87,16 @@ int ioexp_pcf8574_set_all_port(ioexp_pcf8574_id_t id, uint32_t ports)
 }
 
 
-uint32_t ioexp_pcf8574_get_all_port(ioexp_pcf8574_id_t id)
+uint32_t ioexp_get_all_port(int id)
 {
-	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
+	ioexp_obj_buf_t *obj_buf = ioexp_get_obj_buf(id);
 	uint8_t data_out[1];
 	uint8_t len_out;
 	uint8_t data_in[1];
 	uint8_t len_in;
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0)
-		return 0;
+	if (obj_buf == NULL)
+		return -1;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
 	len_out     = 1;
@@ -100,13 +110,13 @@ uint32_t ioexp_pcf8574_get_all_port(ioexp_pcf8574_id_t id)
 }
 
 
-int ioexp_pcf8574_set_one_port(ioexp_pcf8574_id_t id, uint32_t port, uint8_t level)
+int ioexp_set_one_port(int id, int port, uint8_t level)
 {
-	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
+	ioexp_obj_buf_t *obj_buf = ioexp_get_obj_buf(id);
 	uint8_t data_out[2];
 	uint8_t len_out;
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0 || port > 8)
+	if (obj_buf == NULL || port > 8)
 		return -1;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
@@ -125,16 +135,16 @@ int ioexp_pcf8574_set_one_port(ioexp_pcf8574_id_t id, uint32_t port, uint8_t lev
 }
 
 
-uint8_t ioexp_pcf8574_get_one_port(ioexp_pcf8574_id_t id, uint32_t port)
+uint8_t ioexp_get_one_port(int id, int port)
 {
-	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
+	ioexp_obj_buf_t *obj_buf = ioexp_get_obj_buf(id);
 	uint8_t data_out[1];
 	uint8_t len_out;
 	uint8_t data_in[1];
 	uint8_t len_in;
 	uint8_t ret;
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0 || port > 8)
+	if (obj_buf == NULL || port > 8)
 		return 0;
 
 	data_out[0] = I2C_SLAVE_ADDR << 1 | 0;
@@ -150,27 +160,27 @@ uint8_t ioexp_pcf8574_get_one_port(ioexp_pcf8574_id_t id, uint32_t port)
 }
 
 
-ioexp_pcf8574_id_t ioexp_pcf8574_new(struct ioexp_pcf8574_class *ioexp_obj, uint32_t port_scl, uint32_t port_sda)
+int ioexp_pcf8574_new(iopcf_class_t *ioexp_obj, int port_scl, int port_sda)
 {
-	ioexp_pcf8574_id_t id;
-	struct _ioexp_obj_buf_ *obj_buf;
+	int id;
+	ioexp_obj_buf_t *obj_buf;
 
-	if (ioexp_obj == NULL || port_scl == IOEXP_PCF8574_PORT_UNUSED)
-		return IOEXP_PCF8574_ID_ERR;
+	if (ioexp_obj == NULL || port_scl < 0)
+		return -1;
 
-	if ((id = ioexp_pcf8574_get_obj_buf_id()) < 0)
-		return IOEXP_PCF8574_ID_ERR;
+	if ((id = ioexp_get_obj_buf_id()) < 0)
+		return -1;
 
 	obj_buf = &obj_buf_list[id];
 
 	// Create I2C object
-	if ((obj_buf->i2c_id = i2c_new(&obj_buf->i2c, I2C_TYPE_SOFT_MASTER, I2C_SPEED_FULL, port_scl, port_sda)) == I2C_ID_ERR)
-		return IOEXP_PCF8574_ID_ERR;
+	if ((obj_buf->i2c_id = i2c_new(&obj_buf->i2c, I2C_TYPE_SOFT_MASTER, I2C_SPEED_FULL, port_scl, port_sda)) < 0)
+		return -1;
 
-	ioexp_obj->set_all_port = ioexp_pcf8574_set_all_port;
-	ioexp_obj->get_all_port = ioexp_pcf8574_get_all_port;
-	ioexp_obj->set_one_port = ioexp_pcf8574_set_one_port;
-	ioexp_obj->get_one_port = ioexp_pcf8574_get_one_port;
+	ioexp_obj->set_all_port = ioexp_set_all_port;
+	ioexp_obj->get_all_port = ioexp_get_all_port;
+	ioexp_obj->set_one_port = ioexp_set_one_port;
+	ioexp_obj->get_one_port = ioexp_get_one_port;
 
 	// Mark as used
 	obj_buf->used = 1;
@@ -179,18 +189,18 @@ ioexp_pcf8574_id_t ioexp_pcf8574_new(struct ioexp_pcf8574_class *ioexp_obj, uint
 }
 
 
-int ioexp_pcf8574_free(ioexp_pcf8574_id_t id)
+int ioexp_pcf8574_free(int id)
 {
-	struct _ioexp_obj_buf_ *obj_buf = &obj_buf_list[id];
+	ioexp_obj_buf_t *obj_buf = ioexp_get_obj_buf(id);
 
-	if (id >= OBJ_BUF_SIZE || obj_buf->used == 0) 
+	if (obj_buf == NULL)
 		return -1;
 	
 	// Delete I2C object
 	i2c_free(obj_buf->i2c_id);
 
 	// Clear buffer
-	memset(obj_buf, 0, sizeof(struct _ioexp_obj_buf_));
+	memset(obj_buf, 0, sizeof(ioexp_obj_buf_t));
 	
 	return 0;
 }
